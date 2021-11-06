@@ -31,6 +31,7 @@ namespace tabControl
         {
             InitializeComponent();
             tabControl.TabPages.Clear();
+            richTextBox.AllowDrop = true;
             NewPage();
         }
 
@@ -47,10 +48,39 @@ namespace tabControl
             rTb.TabIndex = 0;
             rTb.Text = "";
             rTb.TextChanged += richTextBox_TextChanged;
-            
+            rTb.AllowDrop=true;
+            rTb.DragEnter += (sender, e) => {
+                if (e.Data.GetDataPresent(DataFormats.Text) || e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    e.Effect = DragDropEffects.Copy;
+                }
+                else
+                    e.Effect = DragDropEffects.None;
+            };
+            rTb.DragDrop += (sender, e) =>
+            {
+                if (e.Data.GetDataPresent(DataFormats.Text))
+                {
+                    rTb.Text += e.Data.GetData(DataFormats.Text).ToString();
+                }
+                else if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                {
+                    foreach (var item in (string[])e.Data.GetData(DataFormats.FileDrop))
+                    {
+                        using (StreamReader sr = new StreamReader(item))
+                        {
+                            rTb.Text = sr.ReadToEnd();
+                          
+                        }
+                       
+                    }
+                }
+            };
             page.Controls.Add(rTb);
             tabControl.TabPages.Add(page);
             tabControl.SelectTab(page);
+
+
         }
 
         private void newPageToolStripMenuItem1_Click(object sender, EventArgs e)
@@ -80,6 +110,7 @@ namespace tabControl
                 }
             }
         }
+
         void Open()
         {
             if (tabControl.TabPages.Count > 0)
@@ -114,7 +145,7 @@ namespace tabControl
         {
             Open();
         }
-
+       
         private void saveToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             SaveFileDialog sd = new SaveFileDialog();
